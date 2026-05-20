@@ -956,8 +956,8 @@
             <input type="text" id="f-name" placeholder="홍길동" autocomplete="name">
           </div>
           <div class="form-field">
-            <label for="f-phone">연락처</label>
-            <input type="tel" id="f-phone" placeholder="010-0000-0000" autocomplete="tel">
+            <label for="f-phone">이메일</label>
+            <input type="email" id="f-phone" placeholder="example@company.com" autocomplete="email">
           </div>
         </div>
         <div class="form-field">
@@ -1019,35 +1019,42 @@
     ctaSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  function submitForm() {
+  async function submitForm() {
     var name = document.getElementById('f-name').value.trim();
     var phone = document.getElementById('f-phone').value.trim();
     var industry = document.getElementById('f-industry').value;
     var campaign = document.getElementById('f-campaign').value.trim();
     var errorEl = document.getElementById('form-error');
+    var submitBtn = document.getElementById('submit-btn');
 
     if (!name || !phone || !industry) {
-      errorEl.textContent = '⚠ 이름, 연락처, 업종은 필수 입력 항목입니다.';
+      errorEl.textContent = '⚠ 이름, 이메일, 업종은 필수 입력 항목입니다.';
       errorEl.style.display = 'block';
       return;
     }
     errorEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = '전송 중...';
 
-    var to = 'ads@kcd.co.kr';
-    var subject = encodeURIComponent('[캐시노트 광고 문의] ' + name + ' / ' + industry);
-    var lines = [
-      '안녕하세요, 캐시노트 광고 사례집을 보고 문의드립니다.',
-      '',
-      '■ 담당자 이름: ' + name,
-      '■ 연락처: ' + phone,
-      '■ 업종: ' + industry,
-      '■ 캠페인 내용: ' + (campaign || '미입력'),
-      '',
-      '빠른 연락 부탁드립니다. 감사합니다.'
-    ];
-    var body = encodeURIComponent(lines.join('\n'));
-
-    window.location.href = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+    try {
+      var res = await fetch('https://formspree.io/f/xojbjrey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ 이름: name, 이메일: phone, 업종: industry, 캠페인내용: campaign })
+      });
+      if (res.ok) {
+        document.getElementById('form-wrap').style.display = 'none';
+        document.getElementById('form-success').style.display = 'block';
+        stickyCta.classList.remove('visible');
+      } else {
+        throw new Error();
+      }
+    } catch(e) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '캐시노트 광고팀에 문의하기 →';
+      errorEl.textContent = '⚠ 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+      errorEl.style.display = 'block';
+    }
   }
 </script>
 </body>
